@@ -1,0 +1,96 @@
+//Step 1: package.json
+{
+  "name": "emp-management",
+  "version": "1.0.0",
+  "description": "A simple Employee Management System with Express",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
+
+
+
+//Step 2: src/app.js
+
+import express from "express";
+import bodyParser from "body-parser";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParser.json());
+
+// 👨‍💼 Sample employee data
+let employees = [
+  { id: 1, name: "Mohit Kumar", role: "Developer", salary: 50000 },
+  { id: 2, name: "Aarav Singh", role: "Manager", salary: 75000 },
+  { id: 3, name: "Priya Sharma", role: "Tester", salary: 40000 }
+];
+
+// ✅ Route 1: Home
+app.get("/", (req, res) => {
+  res.send("<h1>👨‍💼 Employee Management System is Running Successfully!</h1>");
+});
+
+// ✅ Route 2: Get all employees
+app.get("/employees", (req, res) => {
+  res.json({ employees });
+});
+
+// ✅ Route 3: Add new employee
+app.post("/employees", (req, res) => {
+  const { name, role, salary } = req.body;
+
+  if (!name || !role || !salary) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
+  const newEmployee = {
+    id: employees.length + 1,
+    name,
+    role,
+    salary
+  };
+
+  employees.push(newEmployee);
+  res.status(201).json({ message: "Employee added successfully", employee: newEmployee });
+});
+
+// ✅ Route 4: Update employee
+app.put("/employees/:id", (req, res) => {
+  const empId = parseInt(req.params.id);
+  const { name, role, salary } = req.body;
+
+  const employee = employees.find(emp => emp.id === empId);
+  if (!employee) {
+    return res.status(404).json({ error: "Employee not found" });
+  }
+
+  if (name) employee.name = name;
+  if (role) employee.role = role;
+  if (salary) employee.salary = salary;
+
+  res.json({ message: "Employee updated successfully", employee });
+});
+
+// ✅ Route 5: Delete employee
+app.delete("/employees/:id", (req, res) => {
+  const empId = parseInt(req.params.id);
+  employees = employees.filter(emp => emp.id !== empId);
+  res.json({ message: "Employee deleted successfully" });
+});
+
+// ✅ Start the server
+app.listen(PORT, () => {
+  console.log(`✅ Server is running on port ${PORT}`);
+});

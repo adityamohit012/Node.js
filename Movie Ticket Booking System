@@ -1,0 +1,101 @@
+Folder Structure
+nodejs/
+│
+├── package.json
+├── src/
+│   ├── app.js
+│   ├── routes/
+│   │   └── movies.js
+│   └── data/
+│       └── movies.json
+
+
+//package.json
+
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "description": "Movie Ticket Booking System in Node.js + Express",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
+
+//2. src/app.js
+
+import express from "express";
+import bodyParser from "body-parser";
+import movieRoutes from "./routes/movies.js";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParser.json());
+app.use("/movies", movieRoutes);
+
+app.get("/", (req, res) => {
+  res.send("<h1>🎬 Movie Ticket Booking System Backend Running!</h1>");
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+//3. src/routes/movies.js
+import express from "express";
+import fs from "fs";
+import path from "path";
+
+const router = express.Router();
+const dataFile = path.resolve("src/data/movies.json");
+
+// Get all movies
+router.get("/", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(dataFile));
+  res.json(data);
+});
+
+// Book a ticket
+router.post("/book", (req, res) => {
+  const { movieId, user } = req.body;
+  if (!movieId || !user) {
+    return res.status(400).json({ error: "movieId and user are required" });
+  }
+
+  const data = JSON.parse(fs.readFileSync(dataFile));
+  const movie = data.movies.find((m) => m.id === movieId);
+
+  if (!movie) return res.status(404).json({ error: "Movie not found" });
+
+  if (movie.availableSeats <= 0) {
+    return res.status(400).json({ error: "No seats available" });
+  }
+
+  movie.availableSeats -= 1;
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+
+  res.json({ message: `🎟️ Ticket booked successfully for ${user}`, movie });
+});
+
+export default router;
+
+//4. src/data/movies.json
+
+{
+  "movies": [
+    { "id": 1, "name": "Inception", "availableSeats": 5 },
+    { "id": 2, "name": "Avatar", "availableSeats": 3 },
+    { "id": 3, "name": "Interstellar", "availableSeats": 4 }
+  ]
+}
+
